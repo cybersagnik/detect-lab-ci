@@ -1,0 +1,34 @@
+title: Suspicious Scheduled Task Creation via schtasks.exe
+id: 87348973-46dd-4603-99d4-63d78294fa4a
+status: test
+description: >
+  Detects creation of scheduled tasks using schtasks.exe from unusual
+  parent processes or with suspicious command patterns. Persistence
+  mechanism commonly used by malware families including Emotet and Qbot.
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+author: Sagnik Ray
+date: 2024/01/01
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains|all:
+      - '/Create'
+      - '/SC'
+  filter_system:
+    ParentImage|contains:
+      - '\System32\services.exe'
+      - '\System32\mmc.exe'
+      - '\System32\taskeng.exe'
+  condition: selection and not filter_system
+falsepositives:
+  - Legitimate software installers
+  - Windows Update
+  - System administration scripts
+level: medium
+tags:
+  - attack.persistence
+  - attack.t1053.005

@@ -1,0 +1,35 @@
+title: LSASS Memory Access Indicating Credential Dumping
+id: 9ca0bab1-ff00-4ed1-a977-b368d962f1ee
+status: test
+description: >
+  Detects process access to lsass.exe which is the primary method used
+  by credential dumping tools including Mimikatz, ProcDump, and
+  comsvcs.dll. TargetImage lsass.exe with VM_READ access is a strong
+  indicator of credential theft.
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+author: Sagnik Ray
+date: 2024/01/01
+logsource:
+  category: process_access
+  product: windows
+detection:
+  selection:
+    TargetImage|endswith: '\lsass.exe'
+  filter_legitimate:
+    SourceImage|contains:
+      - '\Windows\system32\svchost.exe'
+      - '\Windows\System32\wininit.exe'
+      - '\Windows\system32\csrss.exe'
+      - '\Windows\system32\lsass.exe'
+      - '\Windows\System32\MsMpEng.exe'
+      - '\Program Files\Windows Defender\'
+  condition: selection and not filter_legitimate
+falsepositives:
+  - Security software (AV, EDR) legitimately reads LSASS
+  - Windows Defender
+  - Backup software
+level: critical
+tags:
+  - attack.credential_access
+  - attack.t1003.001

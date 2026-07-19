@@ -1,0 +1,35 @@
+title: Registry Run Key Modification for Persistence
+id: c31d63d8-c098-4831-ac23-5028ab2156bc
+status: test
+description: >
+  Detects writes to standard Windows Run key registry locations used
+  for persistence. Modifications from unexpected processes are a strong
+  indicator of malware establishing autorun persistence.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: Sagnik Ray
+date: 2024/01/01
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection:
+    EventType: SetValue
+    TargetObject|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run\'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
+      - '\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run\'
+  filter_legitimate:
+    Image|contains:
+      - '\Windows\system32\'
+      - '\Windows\SysWOW64\'
+      - '\Program Files\'
+      - '\Program Files (x86)\'
+  condition: selection and not filter_legitimate
+falsepositives:
+  - Legitimate software installation adding autostart entries
+  - Windows Update
+level: medium
+tags:
+  - attack.persistence
+  - attack.t1547.001

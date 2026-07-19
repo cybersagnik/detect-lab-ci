@@ -1,0 +1,27 @@
+title: UAC Bypass via Fodhelper.exe
+id: fa3f2cb0-33a1-4651-b542-f8d040400b44
+status: test
+description: >
+  Detects child processes spawned by fodhelper.exe, which is a sign of
+  UAC bypass via registry key manipulation. Fodhelper is a trusted
+  auto-elevating binary that has no legitimate reason to spawn children.
+  Used by multiple APT groups and commodity malware.
+references:
+  - https://attack.mitre.org/techniques/T1548/002/
+  - https://winscope.dk/2017/05/12/uac-bypass-fodhelper/
+author: Sagnik Ray
+date: 2024/01/01
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith: '\fodhelper.exe'
+  condition: selection
+falsepositives:
+  - None known — fodhelper.exe has no legitimate child process behaviour
+level: high
+tags:
+  - attack.privilege_escalation
+  - attack.defense_evasion
+  - attack.t1548.002

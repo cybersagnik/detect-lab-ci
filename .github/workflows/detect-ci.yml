@@ -34,7 +34,7 @@ jobs:
       - name: Convert to KQL
         run: |
           mkdir -p converted/kql
-          for f in $(find sigma-rules -name "*.yml"); do
+          for f in $(find sigma-rules/windows -name "*.yml"); do
             out="converted/kql/${f#sigma-rules/}"
             out="${out%.yml}.txt"
             mkdir -p "$(dirname $out)"
@@ -45,7 +45,7 @@ jobs:
       - name: Convert to SPL
         run: |
           mkdir -p converted/spl
-          for f in $(find sigma-rules -name "*.yml"); do
+          for f in $(find sigma-rules/windows -name "*.yml"); do
             out="converted/spl/${f#sigma-rules/}"
             out="${out%.yml}.txt"
             mkdir -p "$(dirname $out)"

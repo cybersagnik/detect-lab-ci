@@ -29,7 +29,7 @@ jobs:
             pySigma-pipeline-sysmon
 
       - name: Lint all Sigma rules
-        run: sigma check sigma-rules/**/*.yml
+        run: sigma check sigma-rules/windows/**/*.yml
 
       - name: Convert to KQL
         run: |

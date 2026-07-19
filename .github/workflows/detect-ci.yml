@@ -24,11 +24,10 @@ jobs:
 
       - name: Install sigma-cli and backends
         run: |
-          pip install sigma-cli \
+         pip install sigma-cli \
             pySigma-backend-splunk \
             pySigma-backend-microsoft365defender \
-            pySigma-pipeline-sysmon \
-            pySigma-pipeline-microsoft365defender
+            pySigma-pipeline-sysmon
 
       - name: Verify available targets and pipelines
         run: |
@@ -58,23 +57,15 @@ jobs:
             if sigma convert \
                 -t microsoft365defender \
                 -p sysmon \
-                -p microsoft365defender \
                 "$f" > "$out" 2>&1; then
               echo "✓ KQL OK  →  $f"
             else
               echo "✗ KQL FAIL → $f"
-              echo "--- error ---"
               cat "$out"
-              echo "-------------"
               FAILED=1
             fi
           done
-          if [ $FAILED -ne 0 ]; then
-            echo ""
-            echo "One or more KQL conversions failed — see errors above"
-            exit 1
-          fi
-          echo ""
+          [ $FAILED -ne 0 ] && exit 1
           echo "All rules converted to KQL"
 
       - name: Convert to SPL (Splunk)

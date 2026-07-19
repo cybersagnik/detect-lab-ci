@@ -1,0 +1,57 @@
+name: DetectLab CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  detect-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install sigma-cli and backends
+        run: |
+          pip install sigma-cli \
+            pySigma-backend-splunk \
+            pySigma-backend-microsoft365defender \
+            pySigma-pipeline-sysmon
+
+      - name: Lint all Sigma rules
+        run: sigma check sigma-rules/**/*.yml
+
+      - name: Convert to KQL
+        run: |
+          mkdir -p converted/kql
+          for f in $(find sigma-rules -name "*.yml"); do
+            out="converted/kql/${f#sigma-rules/}"
+            out="${out%.yml}.txt"
+            mkdir -p "$(dirname $out)"
+            sigma convert -t microsoft365defender -p sysmon "$f" > "$out" 2>/dev/null \
+              || echo "WARN: KQL conversion failed for $f"
+          done
+
+      - name: Convert to SPL
+        run: |
+          mkdir -p converted/spl
+          for f in $(find sigma-rules -name "*.yml"); do
+            out="converted/spl/${f#sigma-rules/}"
+            out="${out%.yml}.txt"
+            mkdir -p "$(dirname $out)"
+            sigma convert -t splunk -p sysmon "$f" > "$out" 2>/dev/null \
+              || echo "WARN: SPL conversion failed for $f"
+          done
+
+      - name: Upload converted queries
+        uses: actions/upload-artifact@v4
+        with:
+          name: converted-queries
+          path: converted/

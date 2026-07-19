@@ -9,6 +9,7 @@ on:
 jobs:
   detect-pipeline:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,35 +27,98 @@ jobs:
           pip install sigma-cli \
             pySigma-backend-splunk \
             pySigma-backend-microsoft365defender \
-            pySigma-pipeline-sysmon
+            pySigma-pipeline-sysmon \
+            pySigma-pipeline-microsoft365defender
+
+      - name: Verify available targets and pipelines
+        run: |
+          echo "=== sigma-cli version ==="
+          sigma version
+          echo ""
+          echo "=== Available targets ==="
+          sigma list targets
+          echo ""
+          echo "=== Available pipelines ==="
+          sigma list pipelines
 
       - name: Lint all Sigma rules
-        run: sigma check sigma-rules/windows/**/*.yml
+        run: |
+          echo "=== Linting rules ==="
+          sigma check sigma-rules/windows/**/*.yml
+          echo "All rules passed lint"
 
-      - name: Convert to KQL
+      - name: Convert to KQL (Microsoft Sentinel)
         run: |
           mkdir -p converted/kql
-          for f in $(find sigma-rules/windows -name "*.yml"); do
+          FAILED=0
+          for f in $(find sigma-rules/windows -name "*.yml" | sort); do
             out="converted/kql/${f#sigma-rules/}"
             out="${out%.yml}.txt"
             mkdir -p "$(dirname $out)"
-            sigma convert -t microsoft365defender -p sysmon "$f" > "$out" 2>/dev/null \
-              || echo "WARN: KQL conversion failed for $f"
+            if sigma convert \
+                -t microsoft365defender \
+                -p sysmon \
+                -p microsoft365defender \
+                "$f" > "$out" 2>&1; then
+              echo "✓ KQL OK  →  $f"
+            else
+              echo "✗ KQL FAIL → $f"
+              echo "--- error ---"
+              cat "$out"
+              echo "-------------"
+              FAILED=1
+            fi
           done
+          if [ $FAILED -ne 0 ]; then
+            echo ""
+            echo "One or more KQL conversions failed — see errors above"
+            exit 1
+          fi
+          echo ""
+          echo "All rules converted to KQL"
 
-      - name: Convert to SPL
+      - name: Convert to SPL (Splunk)
         run: |
           mkdir -p converted/spl
-          for f in $(find sigma-rules/windows -name "*.yml"); do
+          FAILED=0
+          for f in $(find sigma-rules/windows -name "*.yml" | sort); do
             out="converted/spl/${f#sigma-rules/}"
             out="${out%.yml}.txt"
             mkdir -p "$(dirname $out)"
-            sigma convert -t splunk -p sysmon "$f" > "$out" 2>/dev/null \
-              || echo "WARN: SPL conversion failed for $f"
+            if sigma convert \
+                -t splunk \
+                -p sysmon \
+                "$f" > "$out" 2>&1; then
+              echo "✓ SPL OK  →  $f"
+            else
+              echo "✗ SPL FAIL → $f"
+              echo "--- error ---"
+              cat "$out"
+              echo "-------------"
+              FAILED=1
+            fi
           done
+          if [ $FAILED -ne 0 ]; then
+            echo ""
+            echo "One or more SPL conversions failed — see errors above"
+            exit 1
+          fi
+          echo ""
+          echo "All rules converted to SPL"
+
+      - name: List all converted files
+        run: |
+          echo "=== KQL files ==="
+          find converted/kql -type f | sort
+          echo ""
+          echo "=== SPL files ==="
+          find converted/spl -type f | sort
+          echo ""
+          echo "Total: $(find converted/ -type f | wc -l) files generated"
 
       - name: Upload converted queries
         uses: actions/upload-artifact@v4
         with:
-          name: converted-queries
+          name: converted-queries-${{ github.sha }}
           path: converted/
+          if-no-files-found: error

@@ -55,7 +55,7 @@ jobs:
             out="${out%.yml}.txt"
             mkdir -p "$(dirname $out)"
             if sigma convert \
-                -t microsoft365defender \
+                -t kusto \
                 -p sysmon \
                 "$f" > "$out" 2>&1; then
               echo "✓ KQL OK  →  $f"
@@ -67,7 +67,7 @@ jobs:
           done
           [ $FAILED -ne 0 ] && exit 1
           echo "All rules converted to KQL"
-
+          
       - name: Convert to SPL (Splunk)
         run: |
           mkdir -p converted/spl

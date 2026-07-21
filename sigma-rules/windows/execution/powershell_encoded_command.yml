@@ -18,7 +18,6 @@ detection:
       - '\powershell.exe'
       - '\pwsh.exe'
     CommandLine|contains:
-      - ' -EncodedCommand '
       - ' -enc '
       - ' -e '
   filter_legitimate:

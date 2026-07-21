@@ -4,10 +4,10 @@
 
 | Component | Details |
 |---|---|
-| OS | Windows Server 2022 |
+| OS | Windows 10 VM |
 | Telemetry | Sysmon (SwiftOnSecurity config) |
 | SIEM | Wazuh 4.x (WSL2 Ubuntu) |
-| Wazuh Agent | Deployed on Windows Server 2022 VM |
+| Wazuh Agent | Deployed on Windows 10 VM |
 | Adversary Emulation | Atomic Red Team (Invoke-AtomicRedTeam) |
 
 ---
@@ -37,7 +37,7 @@ EID 4104 also fired showing the decoded payload.
 
 **Wazuh alert screenshot:**
 
-[!Wazuh Alert For T1059.001](/images/T1059-001.png)
+![Wazuh Alert For T1059.001](/images/T1059-001.png)
 
 ---
 
@@ -66,7 +66,7 @@ appeared in Wazuh within the same second.
 
 **Wazuh alert screenshot:**
 
-[!Wazuh alert for T1053.005](/images/T1053-005.png)
+![Wazuh alert for T1053.005](/images/T1053-005.png)
 
 ---
 
@@ -94,7 +94,7 @@ block in the rule. Only the procdump access produced a Wazuh alert.
 
 **Wazuh alert screenshot:**
 
-[!Wazuh alert on Process Access](/images/T1003-001.png)
+![Wazuh alert on Process Access](/images/T1003-001.png)
 
 ---
 
@@ -122,7 +122,7 @@ the process that made the change in `image`.
 
 **Wazuh alert screenshot:**
 
-[!Wazuh Alert for T1547.001](/images/T1547-001.png)
+![Wazuh Alert for T1547.001](/images/T1547-001.png)
 
 ---
 
@@ -153,7 +153,7 @@ the clean baseline.
 
 **Wazuh alert screenshot:**
 
-[!Wazuh Alert for T1548.002](/images/T1548-002.png)
+![Wazuh Alert for T1548.002](/images/T1548-002.png)
 
 ---
 

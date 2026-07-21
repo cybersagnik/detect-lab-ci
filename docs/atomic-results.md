@@ -167,5 +167,4 @@ the clean baseline.
 | 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 13 | None |
 | 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 | None |
 
-**Detection rate: 5/5 (100%)**  
-**False positives after tuning: 0**
+**Detection rate: 5/5 (100%)** 

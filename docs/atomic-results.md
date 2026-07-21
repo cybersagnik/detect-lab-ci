@@ -24,14 +24,14 @@
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
 | Key Field | `data.win.eventdata.commandLine` |
-| Key Value Observed | `powershell.exe -EncodedCommand <Base64 blob>` |
+| Key Value Observed | `powershell.exe -e <Base64 blob>` |
 | Secondary Event ID | 4104 (PowerShell Script Block Logging) |
 | False Positives on Clean Baseline | None |
 | Cleanup Command | `Invoke-AtomicTest T1059.001 -TestNumbers 17 -Cleanup` |
 
 **What happened:**
 Sysmon EID 1 fired within seconds of ART execution. The alert appeared
-in Wazuh showing `powershell.exe` spawned with `-EncodedCommand` followed
+in Wazuh showing `powershell.exe` spawned with `-e` followed
 by a Base64 string in the CommandLine field. PowerShell Script Block log
 EID 4104 also fired showing the decoded payload.
 
@@ -80,7 +80,7 @@ appeared in Wazuh within the same second.
 | Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
-| Event ID | 1 (ProcessCreation) |
+| Event ID | 1 (ProcessCreate) |
 | Key Field | `data.win.eventdata.targetImage` |
 | Key Value Observed | `C:\Windows\System32\lsass.exe` |
 | False Positives on Clean Baseline | MsMpEng.exe (Windows Defender) — filtered in rule |

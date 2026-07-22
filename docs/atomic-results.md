@@ -161,7 +161,7 @@ the clean baseline.
 
 | # | Technique | Rule | ART Test | Alert | Primary EID | FP on Clean |
 |---|---|---|---|---|---|---|
-| 1 | T1059.001 | Encoded PowerShell | T1059.001-4 | ✅ | Sysmon 1 | None |
+| 1 | T1059.001 | Encoded PowerShell | T1059.001-17 | ✅ | Sysmon 1 | None |
 | 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1, Win 4698 | None |
 | 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 1 | MsMpEng (filtered) |
 | 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 13 | None |

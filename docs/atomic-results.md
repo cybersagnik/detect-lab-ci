@@ -18,7 +18,7 @@
 
 | Field | Value |
 |---|---|
-| ART Test | `Invoke-AtomicTest T1059.001 -TestNumbers 4` |
+| ART Test | `Invoke-AtomicTest T1059.001 -TestNumbers 17` |
 | Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |

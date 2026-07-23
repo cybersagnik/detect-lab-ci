@@ -130,25 +130,24 @@ over suppression.
 | Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
-| Event ID | 1 (ProcessCreate) |
-| Key Field | `data.win.eventdata.commandLine` |
-| Key Value Observed | `reg.exe add HKCU\...\CurrentVersion\Run` |
+| Event ID | 13 (RegistryEvent — Value Set) |
+| Key Field | `data.win.eventdata.targetObject` + `data.win.eventdata.details` |
+| Key Value Observed | `TargetObject: HKCU\...\CurrentVersion\Run` · `Details: <malicious path>` |
 | Cleanup Command | `Invoke-AtomicTest T1547.001 -TestNumbers 1 -Cleanup` |
 
 **What happened:**
-ART used `reg.exe` to write the Run key entry. Wazuh alerted on Sysmon
-EID 1 (ProcessCreate) — `reg.exe` spawned with the Run key path in
-CommandLine. EID 13 (RegistryEvent) did not fire. Rule updated from
-`registry_set` to `process_creation` logsource to match observed telemetry.
-Filter applied on CommandLine content to exclude known legitimate reg.exe
-operations.
+Sysmon EID 13 fired showing a value written to the Run key under HKCU.
+The `Details` field contained the malicious executable path registered
+for persistence. Alert appeared in Wazuh with the full registry path
+visible in `targetObject`. Filter applied on `Details|contains` to
+exclude known legitimate values — 0 FP confirmed on clean baseline.
 
 **Tuning log:**
 
 | Version | FP Count | Change |
 |---|---|---|
-| v1 | 139 | Unfiltered — all Run key writes matched |
-| v2 | 0 | Added `filter_known_good` on CommandLine content for known legitimate operations |
+| v1 | 139 | Unfiltered — all Run key writes matched including legitimate software |
+| v2 | 0 | Added `filter_known_good` on `Details` field containing known legitimate value strings |
 
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1547.001](images/T1547-001.png)
@@ -192,11 +191,11 @@ the parent process.
 
 | # | Technique | Rule | ART Test | Alert | Primary EID | FP on Clean |
 |---|---|---|---|---|---|---|
-| 1 | T1059.001 | Encoded PowerShell | T1059.001-4 | ✅ | Sysmon 1 | None |
-| 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1, Win 4698 | None |
-| 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 | MsMpEng (filtered) |
-| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 13 | None |
-| 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 | None |
+| 1 | T1059.001 | Encoded PowerShell | T1059.001-4 | ✅ | Sysmon 1 | 2 --> 0 |
+| 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1, Win 4698 | 899 --> 9 |
+| 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 | 30 --> 1 |
+| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 13 | 139 --> 0 |
+| 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 | 0 |
 
 **Detection rate: 5/5 (100%)**
 **Total FP reduction: 1,070 → 10 (99% reduction)**

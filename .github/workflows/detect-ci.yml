@@ -53,7 +53,7 @@ jobs:
       - name: Run EVTX test runner
         run: |
           pip install python-evtx pyyaml
-          python tests/test_runner.py
+          python scripts/test_runner.py
 
       - name: Convert to KQL (Microsoft Sentinel)
         run: |

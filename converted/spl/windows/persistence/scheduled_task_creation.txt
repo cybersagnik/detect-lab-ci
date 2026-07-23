@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\schtasks.exe" CommandLine="*/Create*" CommandLine="*/TR*" CommandLine IN ("*powershell*", "*cmd.exe*", "*wscript*", "*cscript*", "*mshta*", "*regsvr32*", "*\\Temp\\*", "*\\AppData\\Local\\Temp*", "*\\AppData\\Roaming*") OR NOT (CommandLine IN ("*/TR \"C:\\Windows\\*", "*/TR \"C:\\Program Files\\*", "*/TR \"C:\\Program Files (x86)\\*"))

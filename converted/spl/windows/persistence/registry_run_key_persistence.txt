@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=13 TargetObject IN ("*\\Software\\Microsoft\\Windows\\CurrentVersion\\Run*", "*\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce*") EventType="SetValue" NOT (Details IN ("*OneDrive*", "*SecurityHealth*", "*Windows Defender*", "*Teams*", "*AdobeGCInvoker*")) | table EventID,TargetObject,Details,Image

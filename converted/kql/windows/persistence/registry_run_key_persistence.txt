@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 13 and (((TargetObject contains "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" or TargetObject contains "\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce") and EventType =~ "SetValue") and (not((Details contains "OneDrive" or Details contains "SecurityHealth" or Details contains "Windows Defender" or Details contains "Teams" or Details contains "AdobeGCInvoker"))))

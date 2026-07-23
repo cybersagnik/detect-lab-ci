@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 10 and ((TargetImage endswith "\\lsass.exe" and (GrantedAccess contains "0x1010" or GrantedAccess contains "0x1410" or GrantedAccess contains "0x1438" or GrantedAccess contains "0x143a" or GrantedAccess contains "0x1fffff" or GrantedAccess contains "0x40")) and (not(SourceImage endswith "\\wininit.exe")))

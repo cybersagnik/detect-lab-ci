@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image IN ("*\\powershell.exe", "*\\pwsh.exe") CommandLine IN ("* -EncodedCommand *", "* -enc *", "*-e *") NOT CommandLine="*C:\\Windows\\system32\\WindowsPowerShell*"

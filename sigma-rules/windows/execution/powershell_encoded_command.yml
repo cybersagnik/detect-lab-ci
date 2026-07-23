@@ -1,14 +1,15 @@
 title: Suspicious Encoded PowerShell Command
-id: 453d5c5e-7e12-45b9-8bb3-5ef91bc238ca
+id: a7d5c8e2-3f1b-4a9c-b2e6-8d4f1c7a9b3e
 status: test
 description: >
   Detects execution of PowerShell with Base64 encoded commands via the
-  -EncodedCommand flag. Commonly used by attackers to obfuscate malicious
-  payloads and bypass command-line monitoring.
+  -EncodedCommand, -e or -enc flags. Commonly used by attackers to obfuscate
+  malicious payloads and bypass command-line monitoring.
 references:
   - https://attack.mitre.org/techniques/T1059/001/
+  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1059.001/T1059.001.md
 author: Sagnik Ray
-date: 2024/01/01
+date: 2025/07/01
 logsource:
   category: process_creation
   product: windows
@@ -18,15 +19,17 @@ detection:
       - '\powershell.exe'
       - '\pwsh.exe'
     CommandLine|contains:
+      - ' -EncodedCommand '
       - ' -enc '
-      - ' -e '
+      - '-e '
   filter_legitimate:
     CommandLine|contains:
       - 'C:\Windows\system32\WindowsPowerShell'
   condition: selection and not filter_legitimate
 falsepositives:
-  - Some legitimate automation tools use encoded commands
+  - Legitimate automation tools using encoded commands
   - SCCM client installations
+  - Some software deployment tools
 level: high
 tags:
   - attack.execution

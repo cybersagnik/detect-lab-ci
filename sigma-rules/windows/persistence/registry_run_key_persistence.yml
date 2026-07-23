@@ -1,34 +1,33 @@
-title: Registry Run Key Modification for Persistence
-id: c31d63d8-c098-4831-ac23-5028ab2156bc
-status: test
-description: >
-  Detects writes to standard Windows Run key registry locations used
-  for persistence. Modifications from unexpected processes are a strong
-  indicator of malware establishing autorun persistence.
-references:
-  - https://attack.mitre.org/techniques/T1547/001/
+title: Registry Run Key Persistence - Low FP
+id: 2b8f4c9a-7f3a-4b1a-9d3e-8a7f2b9d1c11
+description: Detects suspicious additions to Windows Run/RunOnce registry keys with filtering to reduce false positives from known software.
+status: experimental
 author: Sagnik Ray
-date: 2024/01/01
+date: 2026/07/22
 logsource:
   category: registry_set
   product: windows
 detection:
   selection:
-    EventType: SetValue
     TargetObject|contains:
-      - '\Software\Microsoft\Windows\CurrentVersion\Run\'
-      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
-      - '\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run\'
-  filter_legitimate:
-    Image|contains:
-      - '\Windows\system32\'
-      - '\Windows\SysWOW64\'
-      - '\Program Files\'
-      - '\Program Files (x86)\'
-  condition: selection and not filter_legitimate
+      - '\Software\Microsoft\Windows\CurrentVersion\Run'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce'
+    EventType: 'SetValue'
+  filter_known_good:
+    Details|contains:
+      - 'OneDrive'
+      - 'SecurityHealth'
+      - 'Windows Defender'
+      - 'Teams'
+      - 'AdobeGCInvoker'
+  condition: selection and not filter_known_good
+fields:
+  - EventID
+  - TargetObject
+  - Details
+  - Image
 falsepositives:
-  - Legitimate software installation adding autostart entries
-  - Windows Update
+  - Legitimate software installers or updates
 level: medium
 tags:
   - attack.persistence

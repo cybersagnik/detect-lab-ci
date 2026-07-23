@@ -1,0 +1,8 @@
+sigma-cli
+pySigma-backend-splunk
+pySigma-backend-microsoft365defender
+pySigma-pipeline-sysmon
+python-evtx
+pyyaml
+lxml
+requests

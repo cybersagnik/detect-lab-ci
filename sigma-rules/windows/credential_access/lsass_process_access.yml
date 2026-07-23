@@ -1,34 +1,37 @@
 title: LSASS Memory Access Indicating Credential Dumping
-id: 9ca0bab1-ff00-4ed1-a977-b368d962f1ee
+id: c6f2a9d5-8e4b-4c1f-b7a2-3d9e5f8c1b4a
 status: test
 description: >
-  Detects process access to lsass.exe which is the primary method used
-  by credential dumping tools including Mimikatz, ProcDump, and
-  comsvcs.dll. TargetImage lsass.exe with VM_READ access is a strong
-  indicator of credential theft.
+  Detects process access to lsass.exe with access masks associated with
+  credential dumping. Filters on GrantedAccess masks rather than
+  SourceImage to avoid blindly trusting process names that can be
+  spoofed or injected. Only wininit.exe is filtered by process name
+  as it holds a legitimate permanent handle to LSASS at boot and
+  cannot be spawned by user-level processes.
 references:
   - https://attack.mitre.org/techniques/T1003/001/
+  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1003.001/T1003.001.md
 author: Sagnik Ray
-date: 2024/01/01
+date: 2025/07/01
 logsource:
   category: process_access
   product: windows
 detection:
   selection:
     TargetImage|endswith: '\lsass.exe'
-  filter_legitimate:
-    SourceImage|contains:
-      - '\Windows\system32\svchost.exe'
-      - '\Windows\System32\wininit.exe'
-      - '\Windows\system32\csrss.exe'
-      - '\Windows\system32\lsass.exe'
-      - '\Windows\System32\MsMpEng.exe'
-      - '\Program Files\Windows Defender\'
-  condition: selection and not filter_legitimate
+    GrantedAccess|contains:
+      - '0x1010'
+      - '0x1410'    
+      - '0x1438'    
+      - '0x143a'    
+      - '0x1fffff'  
+      - '0x40'    
+  filter_wininit:
+    SourceImage|endswith: '\wininit.exe'
+  condition: selection and not filter_wininit
 falsepositives:
-  - Security software (AV, EDR) legitimately reads LSASS
-  - Windows Defender
-  - Backup software
+  - Security software opening LSASS with these specific masks (rare)
+  - Investigate SourceImage and parent process before closing alert
 level: critical
 tags:
   - attack.credential_access

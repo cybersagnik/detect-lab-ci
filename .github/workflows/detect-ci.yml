@@ -10,12 +10,16 @@ jobs:
   detect-pipeline:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: master
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -24,7 +28,7 @@ jobs:
 
       - name: Install sigma-cli and backends
         run: |
-         pip install sigma-cli \
+          pip install sigma-cli \
             pySigma-backend-splunk \
             pySigma-backend-microsoft365defender \
             pySigma-pipeline-sysmon
@@ -45,6 +49,11 @@ jobs:
           echo "=== Linting rules ==="
           sigma check sigma-rules/windows/**/*.yml
           echo "All rules passed lint"
+
+      - name: Run EVTX test runner
+        run: |
+          pip install python-evtx pyyaml
+          python tests/test_runner.py
 
       - name: Convert to KQL (Microsoft Sentinel)
         run: |
@@ -67,7 +76,7 @@ jobs:
           done
           [ $FAILED -ne 0 ] && exit 1
           echo "All rules converted to KQL"
-          
+
       - name: Convert to SPL (Splunk)
         run: |
           mkdir -p converted/spl
@@ -83,18 +92,11 @@ jobs:
               echo "✓ SPL OK  →  $f"
             else
               echo "✗ SPL FAIL → $f"
-              echo "--- error ---"
               cat "$out"
-              echo "-------------"
               FAILED=1
             fi
           done
-          if [ $FAILED -ne 0 ]; then
-            echo ""
-            echo "One or more SPL conversions failed — see errors above"
-            exit 1
-          fi
-          echo ""
+          [ $FAILED -ne 0 ] && exit 1
           echo "All rules converted to SPL"
 
       - name: List all converted files
@@ -107,7 +109,23 @@ jobs:
           echo ""
           echo "Total: $(find converted/ -type f | wc -l) files generated"
 
-      - name: Upload converted queries
+      - name: Commit converted queries to repo
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add converted/
+          if git diff --staged --quiet; then
+            echo "No changes to converted files — skipping commit"
+          else
+            git commit -m "ci: auto-update converted KQL and SPL queries [skip ci]
+
+            Generated from Sigma rules on push to master.
+            Do not edit these files manually — they are auto-generated."
+            git push origin master
+          fi
+
+      - name: Upload converted queries as artifact
         uses: actions/upload-artifact@v4
         with:
           name: converted-queries-${{ github.sha }}

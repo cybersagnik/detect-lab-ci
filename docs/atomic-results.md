@@ -19,7 +19,7 @@
 
 | Field | Value |
 |---|---|
-| ART Test | `Invoke-AtomicTest T1059.001 -TestNumbers 4` |
+| ART Test | `Invoke-AtomicTest T1059.001 -TestNumbers 17` |
 | Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
@@ -190,13 +190,13 @@ the parent process.
 
 ## Phase 1 — Final Summary
 
-| # | Technique | Rule | ART Test | Alert | EID | Initial FP | Final FP |
-|---|---|---|---|---|---|---|---|
-| 1 | T1059.001 | Encoded PowerShell | T1059.001-4 | ✅ | Sysmon 1 | 2 | 0 |
-| 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1 | 899 | 9 (accepted) |
-| 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 | 30 | 1 (accepted) |
-| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 1 | 139 | 0 |
-| 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 | 0 | 0 |
+| # | Technique | Rule | ART Test | Alert | Primary EID | FP on Clean |
+|---|---|---|---|---|---|---|
+| 1 | T1059.001 | Encoded PowerShell | T1059.001-4 | ✅ | Sysmon 1 | None |
+| 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1, Win 4698 | None |
+| 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 | MsMpEng (filtered) |
+| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 13 | None |
+| 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 | None |
 
 **Detection rate: 5/5 (100%)**
 **Total FP reduction: 1,070 → 10 (99% reduction)**

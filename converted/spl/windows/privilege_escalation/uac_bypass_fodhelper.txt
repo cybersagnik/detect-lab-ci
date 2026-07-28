@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 ParentImage="*\\fodhelper.exe"

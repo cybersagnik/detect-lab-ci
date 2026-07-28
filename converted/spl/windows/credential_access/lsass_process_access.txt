@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=10 TargetImage="*\\lsass.exe" GrantedAccess IN ("*0x1010*", "*0x1410*", "*0x1438*", "*0x143a*", "*0x1fffff*", "*0x40*") NOT SourceImage="*\\wininit.exe"

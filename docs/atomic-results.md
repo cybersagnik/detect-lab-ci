@@ -448,7 +448,7 @@ was confirmed enabled during this test.
 ![Wazuh Alert For T1546.003](images/T1546-003.png)
  
 ---
- 
+
 ## CUMULATIVE SUMMARY
  
 ### Phase 1

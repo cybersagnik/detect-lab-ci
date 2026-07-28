@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and (((Image endswith "\\powershell.exe" or Image endswith "\\pwsh.exe") and (CommandLine contains " -EncodedCommand " or CommandLine contains " -enc " or CommandLine contains "-e ")) and (not(CommandLine contains "C:\\Windows\\system32\\WindowsPowerShell")))

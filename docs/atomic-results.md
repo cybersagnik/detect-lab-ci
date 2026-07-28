@@ -304,7 +304,7 @@ containing `DownloadString` and `IEX`. Rule should include EID 4104
 as a detection source alongside EID 1 for full coverage.
  
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1059.001 Download Cradle](images/T1059-001-dl.png)
+![Wazuh Alert For T1059.001 Download Cradle](images/T1059.001.png)
  
 ---
  
@@ -390,7 +390,7 @@ a classic application whitelisting bypass. ART test ran twice (initial
 run + re-run both captured).
  
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1218.005](images/T1218-005.png)
+![Wazuh Alert For T1218.005](images/T1218.005.png)
  
 ---
  
@@ -417,7 +417,7 @@ during the test). The `/i:` and `scrobj.dll` combination is the
 canonical Squiblydoo bypass pattern.
  
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1218.010](images/T1218-010.png)
+![Wazuh Alert For T1218.010](images/T1218.010.png)
  
 ---
  
@@ -445,7 +445,7 @@ and destination (`notepad.exe` as the payload). Script Block Logging
 was confirmed enabled during this test.
  
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1546.003](images/T1546-003.png)
+![Wazuh Alert For T1546.003](images/T1546.003-1.png)
  
 ---
 

@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and (Image endswith "\\mshta.exe" and (CommandLine contains "http" or CommandLine contains ".hta" or CommandLine contains "vbscript" or CommandLine contains "javascript"))

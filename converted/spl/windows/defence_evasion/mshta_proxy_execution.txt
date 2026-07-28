@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\mshta.exe" CommandLine IN ("*http*", "*.hta*", "*vbscript*", "*javascript*")

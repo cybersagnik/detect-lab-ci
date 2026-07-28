@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\wmic.exe" CommandLine IN ("*process*", "*call*", "*create*") NOT (CommandLine IN ("*Win32_Processor*", "*Win32_ComputerSystem*", "*Win32_OperatingSystem*"))

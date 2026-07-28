@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and (Image endswith "\\systeminfo.exe" and (not((ParentImage endswith "\\msiexec.exe" or ParentImage endswith "\\setup.exe"))))

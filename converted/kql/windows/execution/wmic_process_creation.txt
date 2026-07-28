@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and ((Image endswith "\\wmic.exe" and (CommandLine contains "process" or CommandLine contains "call" or CommandLine contains "create")) and (not((CommandLine contains "Win32_Processor" or CommandLine contains "Win32_ComputerSystem" or CommandLine contains "Win32_OperatingSystem"))))

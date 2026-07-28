@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\tasklist.exe" NOT ParentImage="*\\explorer.exe"

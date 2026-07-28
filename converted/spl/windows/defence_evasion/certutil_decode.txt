@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\certutil.exe" CommandLine IN ("*-decode*", "*-urlcache*", "*-split*", "*-f http*")

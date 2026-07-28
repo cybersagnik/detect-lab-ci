@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and ((Image endswith "\\regsvr32.exe" and (CommandLine contains "http" or CommandLine contains "scrobj" or CommandLine contains "/i:" or CommandLine contains "-i:")) and (not((CommandLine endswith ".dll" or CommandLine endswith ".ocx"))))

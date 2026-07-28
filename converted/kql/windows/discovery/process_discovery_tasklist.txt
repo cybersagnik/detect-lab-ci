@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and (Image endswith "\\tasklist.exe" and (not(ParentImage endswith "\\explorer.exe")))

@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 (Image="*\\ipconfig.exe" CommandLine="*/all*") OR (Image="*\\netstat.exe" CommandLine IN ("*-ano*", "*-an*"))

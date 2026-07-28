@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\regsvr32.exe" CommandLine IN ("*http*", "*scrobj*", "*/i:*", "*-i:*") NOT (CommandLine IN ("*.dll", "*.ocx"))

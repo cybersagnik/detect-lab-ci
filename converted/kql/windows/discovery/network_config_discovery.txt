@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and ((Image endswith "\\ipconfig.exe" and CommandLine contains "/all") or (Image endswith "\\netstat.exe" and (CommandLine contains "-ano" or CommandLine contains "-an")))

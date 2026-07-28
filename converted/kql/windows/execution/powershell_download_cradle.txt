@@ -1,0 +1,2 @@
+Parsing Sigma rules
+(ScriptBlockText contains "DownloadString" or ScriptBlockText contains "DownloadFile" or ScriptBlockText contains "WebClient" or ScriptBlockText contains "Invoke-WebRequest" or ScriptBlockText contains "IEX" or ScriptBlockText contains "Invoke-Expression") and (not((ScriptBlockText contains "Chocolatey" or ScriptBlockText contains "NuGet" or ScriptBlockText contains "PSGallery" or ScriptBlockText contains "https://download.microsoft.com" or ScriptBlockText contains "https://internal-repo.company.com")))

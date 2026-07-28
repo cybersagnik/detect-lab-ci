@@ -1,0 +1,2 @@
+Parsing Sigma rules
+(EventID in~ ("19", "20", "21")) and (EventID in~ ("19", "20", "21"))

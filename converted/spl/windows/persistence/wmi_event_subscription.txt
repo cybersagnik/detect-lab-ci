@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID IN (19, 20, 21) EventID IN (19, 20, 21)

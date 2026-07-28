@@ -1,0 +1,2 @@
+Parsing Sigma rules
+ScriptBlockText IN ("*DownloadString*", "*DownloadFile*", "*WebClient*", "*Invoke-WebRequest*", "*IEX*", "*Invoke-Expression*") NOT (ScriptBlockText IN ("*Chocolatey*", "*NuGet*", "*PSGallery*", "*https://download.microsoft.com*", "*https://internal-repo.company.com*"))

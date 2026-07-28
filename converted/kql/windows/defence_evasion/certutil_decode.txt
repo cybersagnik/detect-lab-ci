@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID == 1 and (Image endswith "\\certutil.exe" and (CommandLine contains "-decode" or CommandLine contains "-urlcache" or CommandLine contains "-split" or CommandLine contains "-f http"))

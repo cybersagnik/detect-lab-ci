@@ -1,0 +1,2 @@
+Parsing Sigma rules
+EventID=1 Image="*\\systeminfo.exe" NOT (ParentImage IN ("*\\msiexec.exe", "*\\setup.exe"))

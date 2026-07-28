@@ -1,0 +1,30 @@
+title: Network Configuration Discovery
+id: b1d5a8c3-2e7f-4a6b-c9d4-7f1a4b7d2e5c
+status: test
+description: >
+  Detects use of ipconfig or netstat for network configuration
+  enumeration. Combined with other discovery techniques indicates
+  active post-compromise reconnaissance.
+references:
+  - https://attack.mitre.org/techniques/T1016/
+author: Sagnik Ray
+date: 2025/07/01
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_ipconfig:
+    Image|endswith: '\ipconfig.exe'
+    CommandLine|contains: '/all'
+  selection_netstat:
+    Image|endswith: '\netstat.exe'
+    CommandLine|contains:
+      - '-ano'
+      - '-an'
+  condition: selection_ipconfig or selection_netstat
+falsepositives:
+  - Legitimate network troubleshooting by administrators
+level: low
+tags:
+  - attack.discovery
+  - attack.t1016

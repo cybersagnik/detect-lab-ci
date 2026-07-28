@@ -1,0 +1,30 @@
+title: Mshta Proxy Execution
+id: a2c5f8e1-3b7d-4c9a-e1f4-7b2d5c8a1e3f
+status: test
+description: >
+  Detects mshta.exe executing remote HTA files or URLs. Used to proxy
+  execution and bypass application whitelisting by abusing Microsoft
+  HTML Application host.
+references:
+  - https://attack.mitre.org/techniques/T1218/005/
+author: Sagnik Ray
+date: 2025/07/01
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\mshta.exe'
+    CommandLine|contains:
+      - 'http'
+      - '.hta'
+      - 'vbscript'
+      - 'javascript'
+  
+  condition: selection
+falsepositives:
+  - Legitimate HTA applications — review URL or file path in CommandLine
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1218.005

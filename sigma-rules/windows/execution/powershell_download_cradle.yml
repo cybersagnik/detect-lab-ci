@@ -1,0 +1,42 @@
+title: PowerShell Download Cradle
+id: d6f9c4e2-7a3b-4c1d-e5f8-3b6c9d2f5a8e
+status: test
+description: >
+  Detects PowerShell download cradles used to pull and execute remote
+  payloads. Focuses on ScriptBlockText since cradle code is not reflected
+  in process command line. Typical indicators include WebClient methods
+  combined with in-memory execution (IEX/Invoke-Expression).
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+author: Sagnik Ray
+date: 2025/07/01
+logsource:
+  category: script_block
+  product: windows
+detection:
+  selection_scriptblock:
+    ScriptBlockText|contains:
+      - 'DownloadString'
+      - 'DownloadFile'
+      - 'WebClient'
+      - 'Invoke-WebRequest'
+      - 'IEX'
+      - 'Invoke-Expression'
+
+  filter_legitimate:
+    ScriptBlockText|contains:
+      - 'Chocolatey'
+      - 'NuGet'
+      - 'PSGallery'
+      - 'https://download.microsoft.com'
+      - 'https://internal-repo.company.com'
+
+  condition: selection_scriptblock and not filter_legitimate
+falsepositives:
+  - Legitimate PowerShell scripts using WebClient for downloads
+  - Software deployment scripts
+  - Package managers (Chocolatey, NuGet, PSGallery)
+level: high
+tags:
+  - attack.execution
+  - attack.t1059.001

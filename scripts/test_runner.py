@@ -32,6 +32,22 @@ RULE_TO_TECHNIQUE = {
     "windows/credential_access/lsass_process_access.yml":    "T1003.001",
     "windows/persistence/registry_run_key_persistence.yml":  "T1547.001",
     "windows/privilege_escalation/uac_bypass_fodhelper.yml": "T1548.002",
+    #phase3 addition
+    "windows/defense_evasion/regsvr32_proxy_execution.yml":          "T1218.010",
+    "windows/defense_evasion/mshta_proxy_execution.yml":             "T1218.005",
+    "windows/execution/wmic_process_creation.yml":                   "T1047",
+    "windows/persistence/suspicious_service_installation.yml":       "T1543.003",
+    "windows/execution/powershell_download_cradle.yml":              "T1059.001-dl",
+    "windows/persistence/wmi_event_subscription.yml":                "T1546.003",
+    "windows/discovery/systeminfo_execution.yml":                    "T1082",
+    "windows/discovery/process_discovery_tasklist.yml":              "T1057",
+    "windows/discovery/network_config_discovery.yml":                "T1016",
+    "windows/defense_evasion/certutil_decode.yml":                   "T1140",
+    "windows/execution/cmd_spawned_by_office.yml":                   "T1059.003",
+    "windows/defense_evasion/certutil_encode.yml":                   "T1027",
+    "windows/defense_evasion/reg_suspicious_modification.yml":       "T1112",
+    "windows/defense_evasion/masquerading_process_name.yml":         "T1036.005",
+    "windows/credential_access/sam_registry_dump.yml":               "T1003.002",
 }
 
 

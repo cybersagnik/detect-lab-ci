@@ -1,0 +1,28 @@
+title: WMI Event Subscription Persistence
+id: e7a2d5c8-8b4c-4d3e-f6a9-4c7d2e5b8c1f
+status: test
+description: >
+  Detects creation of WMI event subscriptions used for persistence.
+  Sysmon captures WMI filter (EID 19), consumer (EID 20), and binding
+  (EID 21) creation events.
+references:
+  - https://attack.mitre.org/techniques/T1546/003/
+author: Sagnik Ray
+date: 2025/07/01
+logsource:
+  product: windows
+  category: wmi_event
+detection:
+  selection:
+    EventID:
+      - 19
+      - 20
+      - 21
+  condition: selection
+falsepositives:
+  - Legitimate WMI-based monitoring tools (SCCM, antivirus)
+  - Review consumer type and filter query before escalating
+level: high
+tags:
+  - attack.persistence
+  - attack.t1546.003

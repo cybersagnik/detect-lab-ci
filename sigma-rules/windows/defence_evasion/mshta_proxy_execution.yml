@@ -26,5 +26,5 @@ falsepositives:
   - Legitimate HTA applications — review URL or file path in CommandLine
 level: high
 tags:
-  - attack.defense_evasion
+  - attack.stealth
   - attack.t1218.005

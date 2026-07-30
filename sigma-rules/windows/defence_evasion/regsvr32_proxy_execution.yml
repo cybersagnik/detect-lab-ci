@@ -29,5 +29,5 @@ falsepositives:
   - Legitimate software registration using /i flag
 level: high
 tags:
-  - attack.defense_evasion
+  - attack.stealth
   - attack.t1218.010

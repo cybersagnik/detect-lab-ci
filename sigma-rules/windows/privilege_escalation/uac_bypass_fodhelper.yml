@@ -22,6 +22,5 @@ falsepositives:
   - None known — fodhelper.exe has no legitimate child process behaviour
 level: high
 tags:
-  - attack.privilege_escalation
-  - attack.defense_evasion
+  - attack.privilege-escalation
   - attack.t1548.002

@@ -125,9 +125,23 @@ jobs:
             git push origin master
           fi
 
-      - name: Upload converted queries as artifact
+      - name: Install coverage analysis dependencies
+        run: pip install requests pyyaml
+
+      - name: Generate ATT&CK coverage layer
+        run: python scripts/coverage_mapper.py
+
+      - name: ATT&CK gap analysis
+        run: |
+          python scripts/gap_analysis.py
+          cat docs/gap_report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload detection artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: converted-queries-${{ github.sha }}
-          path: converted/
+          name: detection-artifacts-${{ github.sha }}
+          path: |
+            converted/
+            navigator/coverage_layer.json
+            docs/gap_report.md
           if-no-files-found: error

@@ -21,7 +21,7 @@ detection:
     CommandLine|contains:
       - ' -EncodedCommand '
       - ' -enc '
-      - '-e '
+      - ' -e '
   filter_legitimate:
     CommandLine|contains:
       - 'C:\Windows\system32\WindowsPowerShell'

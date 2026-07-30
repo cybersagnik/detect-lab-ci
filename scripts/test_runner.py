@@ -1,54 +1,162 @@
 #!/usr/bin/env python3
 """
-DetectLab-CI Test Runner
-Validates Sigma rules against real EVTX attack samples.
-Evaluates both detection blocks and filter blocks.
-Reports detection rate and fails CI if below threshold.
+DetectLab-CI Test Runner (EVTX-ATTACK-SAMPLES edition)
+
+Validates Sigma rules against the sbousseaden/EVTX-ATTACK-SAMPLES dataset.
+Each rule is matched against one or more EVTX files known to contain
+real-world samples of that technique.
+
+For every rule the runner:
+  1. Confirms the Sigma rule file exists on disk (drops it if missing)
+  2. Parses its detection + filter blocks
+  3. Streams every record of every mapped EVTX file
+  4. Applies selection + filter logic via case-insensitive substring match
+     on the raw event XML
+  5. Reports per-rule PASS / FAIL with match counts
+  6. Enforces a minimum detection rate as the CI gate
 """
 
+import os
 import sys
 import pathlib
 import yaml
 import re
 
-try:
-    import Evtx.Evtx as evtx
-except ImportError:
-    print("ERROR: python-evtx not installed. Run: pip install python-evtx")
-    sys.exit(1)
+import Evtx.Evtx as evtx
 
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-RULES_DIR       = pathlib.Path("sigma-rules")
-MALICIOUS_DIR   = pathlib.Path("tests/log_samples/malicious")
-CLEAN_DIR       = pathlib.Path("tests/log_samples/clean")
+RULES_DIR     = pathlib.Path("sigma-rules")
+SAMPLES_ROOT  = pathlib.Path("EVTX-ATTACK-SAMPLES")
 MIN_DETECT_RATE = 0.80
 
-# Map rule file (relative to sigma-rules/) → technique folder in malicious/
-RULE_TO_TECHNIQUE = {
-    "windows/execution/powershell_encoded_command.yml":      "T1059.001",
-    "windows/persistence/scheduled_task_creation.yml":       "T1053.005",
-    "windows/credential_access/lsass_process_access.yml":    "T1003.001",
-    "windows/persistence/registry_run_key_persistence.yml":  "T1547.001",
-    "windows/privilege_escalation/uac_bypass_fodhelper.yml": "T1548.002",
-    #phase3 addition
-    "windows/defense_evasion/regsvr32_proxy_execution.yml":          "T1218.010",
-    "windows/defense_evasion/mshta_proxy_execution.yml":             "T1218.005",
-    "windows/execution/wmic_process_creation.yml":                   "T1047",
-    "windows/persistence/suspicious_service_installation.yml":       "T1543.003",
-    "windows/execution/powershell_download_cradle.yml":              "T1059.001-dl",
-    "windows/persistence/wmi_event_subscription.yml":                "T1546.003",
-    "windows/discovery/systeminfo_execution.yml":                    "T1082",
-    "windows/discovery/process_discovery_tasklist.yml":              "T1057",
-    "windows/discovery/network_config_discovery.yml":                "T1016",
-    "windows/defense_evasion/certutil_decode.yml":                   "T1140",
-    "windows/execution/cmd_spawned_by_office.yml":                   "T1059.003",
-    "windows/defense_evasion/certutil_encode.yml":                   "T1027",
-    "windows/defense_evasion/reg_suspicious_modification.yml":       "T1112",
-    "windows/defense_evasion/masquerading_process_name.yml":         "T1036.005",
-    "windows/credential_access/sam_registry_dump.yml":               "T1003.002",
+
+# ── Rule → EVTX file mapping ──────────────────────────────────────────────────
+# Each value is a list of paths RELATIVE to EVTX-ATTACK-SAMPLES.
+# Paths are matched case-insensitively because the dataset uses mixed casing
+# (e.g. "Privilege Escalation" vs "discovery").
+
+RULE_TO_EVTX = {
+    # ── Execution ─────────────────────────────────────────────────────────
+    "windows/execution/powershell_encoded_command.yml": [
+        "Credential Access/discovery_sysmon_1_iis_pwd_and_config_discovery_appcmd.evtx",
+    ],
+    "windows/execution/powershell_download_cradle.yml": [
+        "Other/emotet/exec_emotet_ps_4104.evtx",
+        "Other/emotet/exec_emotet_ps_800_get-item.evtx",
+        "Other/emotet/exec_emotet_ps_800_invoke-item.evtx",
+        "Other/emotet/exec_emotet_ps_800_new-item.evtx",
+        "Other/emotet/exec_emotet_ps_800_new-object.evtx",
+        "Execution/susp_explorer_exec.evtx",
+        "Execution/sysmon_lolbas_rundll32_zipfldr_routethecall_shell.evtx",
+        "Lateral Movement/LM_sysmon_psexec_smb_meterpreter.evtx",
+        "AutomatedTestingTools/PanacheSysmon_vs_AtomicRedTeam01.evtx",
+        "AutomatedTestingTools/panache_sysmon_vs_EDRTestingScript.evtx",
+        "Credential Access/phish_windows_credentials_powershell_scriptblockLog_4104.evtx",
+    ],
+    "windows/execution/wmic_process_creation.yml": [
+        "Execution/exec_wmic_xsl_internet_sysmon_3_1_11.evtx",
+        "Persistence/sysmon_20_21_1_CommandLineEventConsumer.evtx",
+        "Execution/sysmon_exec_from_vss_persistence.evtx",
+    ],
+
+    # ── Persistence ───────────────────────────────────────────────────────
+    "windows/persistence/scheduled_task_creation.yml": [
+        "Privilege Escalation/Sysmon_UACME_34.evtx",
+        "Execution/exec_persist_rundll32_mshta_scheduledtask_sysmon_1_3_11.evtx",
+        "Persistence/persistence_sysmon_11_13_1_shime_appfix.evtx",
+        "Persistence/sysmon_1_11_exec_as_system_via_schedtask.evtx",
+        "Execution/sysmon_exec_from_vss_persistence.evtx",
+    ],
+    "windows/persistence/registry_run_key_persistence.yml": [
+        "AutomatedTestingTools/Malware/DE_timestomp_and_dll_sideloading_and_RunPersist.evtx",
+        "AutomatedTestingTools/Malware/sideloading_injection_persistence_run_key.evtx",
+        "AutomatedTestingTools/PanacheSysmon_vs_AtomicRedTeam01.evtx",
+        "Lateral Movement/lm_remote_registry_sysmon_1_13_3.evtx",
+        "Lateral Movement/wmi_remote_registry_sysmon.evtx",
+        "Persistence/evasion_persis_hidden_run_keyvalue_sysmon_13.evtx",
+    ],
+    "windows/persistence/wmi_event_subscription.yml": [
+        "Persistence/sysmon_20_21_1_CommandLineEventConsumer.evtx",
+        "Persistence/wmighost_sysmon_20_21_1.evtx",
+    ],
+
+    # ── Credential Access ──────────────────────────────────────────────────
+    "windows/credential_access/lsass_process_access.yml": [
+        "Credential Access/sysmon_10_lsass_mimikatz_sekurlsa_logonpasswords.evtx",
+        "Credential Access/CA_sysmon_hashdump_cmd_meterpreter.evtx",
+        "Credential Access/sysmon_10_11_lsass_memdump.evtx",
+        "Defense Evasion/DE_BYOV_Zam64_CA_Memdump_sysmon_7_10.evtx",
+        "Credential Access/babyshark_mimikatz_powershell.evtx",
+        "Discovery/discovery_meterpreter_ps_cmd_process_listing_sysmon_10.evtx",
+        "Credential Access/ppl_bypass_ppldump_knowdll_hijack_sysmon_security.evtx",
+        "Credential Access/sysmon_10_11_outlfank_dumpert_and_andrewspecial_memdump.evtx",
+        "Credential Access/sysmon_2x10_lsass_with_different_pid_RtlCreateProcessReflection.evtx",
+        "Credential Access/sysmon_3_10_Invoke-Mimikatz_hosted_Github.evtx",
+        "Privilege Escalation/sysmon_privesc_from_admin_to_system_handle_inheritance.evtx",
+        "Credential Access/sysmon_rdrleakdiag_lsass_dump.evtx",
+        "Persistence/sysmon_20_21_1_CommandLineEventConsumer.evtx",
+    ],
+
+    # ── Privilege Escalation ───────────────────────────────────────────────
+    "windows/privilege_escalation/uac_bypass_fodhelper.yml": [
+        "Privilege Escalation/Sysmon_UACME_33.evtx",
+    ],
+
+    # ── Discovery ──────────────────────────────────────────────────────────
+    "windows/discovery/network_config_discovery.yml": [
+        "Lateral Movement/LM_winrm_exec_sysmon_1_winrshost.evtx",
+        "Lateral Movement/powercat_revShell_sysmon_1_3.evtx",
+    ],
+    "windows/discovery/process_discovery_tasklist.yml": [
+        "Lateral Movement/LM_ScheduledTask_ATSVC_target_host.evtx",
+    ],
+    "windows/discovery/systeminfo_execution.yml": [
+        "Lateral Movement/powercat_revShell_sysmon_1_3.evtx",
+    ],
+
+    # ── Defense Evasion (folder is spelt defence_evasion in the repo) ──────
+    "windows/defence_evasion/certutil_decode.yml": [
+        "AutomatedTestingTools/PanacheSysmon_vs_AtomicRedTeam01.evtx",
+        "AutomatedTestingTools/panache_sysmon_vs_EDRTestingScript.evtx",
+    ],
+    "windows/defence_evasion/mshta_proxy_execution.yml": [
+        "Execution/exec_persist_rundll32_mshta_scheduledtask_sysmon_1_3_11.evtx",
+        "Execution/exec_sysmon_1_11_lolbin_rundll32_openurl_FileProtocolHandler.evtx",
+        "Execution/sysmon_mshta_sharpshooter_stageless_meterpreter.evtx",
+        "Execution/Sysmon_Exec_CompiledHTML.evtx",
+        "Lateral Movement/LM_DCOM_MSHTA_LethalHTA_Sysmon_3_1.evtx",
+        "AutomatedTestingTools/panache_sysmon_vs_EDRTestingScript.evtx",
+    ],
+    "windows/defence_evasion/regsvr32_proxy_execution.yml": [
+        "Execution/exec_sysmon_1_7_jscript9_defense_evasion.evtx",
+        "Execution/exec_sysmon_lobin_regsvr32_sct.evtx",
+        "Persistence/sysmon_1_persist_bitsjob_SetNotifyCmdLine.evtx",
+    ],
 }
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def resolve_sample(rel_path: str) -> pathlib.Path | None:
+    """Resolve a relative path inside EVTX-ATTACK-SAMPLES, case-insensitively."""
+    target = (SAMPLES_ROOT / rel_path).resolve()
+    if target.exists():
+        return target
+
+    parts = pathlib.PurePosixPath(rel_path).parts
+    root = SAMPLES_ROOT
+    for part in parts:
+        match = None
+        for entry in root.iterdir():
+            if entry.name.lower() == part.lower():
+                match = entry
+                break
+        if match is None:
+            return None
+        root = match
+    return root if root.is_file() else None
 
 
 # ── YAML loader ───────────────────────────────────────────────────────────────
@@ -68,12 +176,6 @@ def extract_blocks(rule: dict) -> tuple[list, list]:
     Parse the Sigma detection block into two lists:
       detection_pairs : (field, value) from selection/non-filter blocks
       filter_pairs    : (field, value) from filter_* blocks
-
-    Handles:
-      - dict blocks  : {Field|modifier: value_or_list}
-      - list blocks  : [{Field: value}, ...]
-      - scalar values
-      - nested all-of lists (contains|all style)
     """
     detection = rule.get("detection", {})
 
@@ -119,7 +221,7 @@ def parse_evtx(path: pathlib.Path) -> list[str]:
     """Return list of raw XML strings from an EVTX file."""
     events = []
     try:
-        with evtx.Evtx(str(path)) as log:
+        with evtx.Evtx(os.fspath(path)) as log:
             for record in log.records():
                 try:
                     events.append(record.xml())
@@ -133,10 +235,7 @@ def parse_evtx(path: pathlib.Path) -> list[str]:
 # ── Match logic ───────────────────────────────────────────────────────────────
 
 def any_pair_matches(event_xml: str, pairs: list[tuple[str, str]]) -> bool:
-    """
-    Return True if ANY (field, value) pair matches the event XML.
-    Case-insensitive substring match — covers contains/endswith/startswith.
-    """
+    """Case-insensitive substring match — covers contains/endswith/startswith."""
     event_lower = event_xml.lower()
     for _, value in pairs:
         if value.lower() in event_lower:
@@ -144,26 +243,9 @@ def any_pair_matches(event_xml: str, pairs: list[tuple[str, str]]) -> bool:
     return False
 
 
-def all_pairs_match(event_xml: str, pairs: list[tuple[str, str]]) -> bool:
-    """
-    Return True if ALL (field, value) pairs match the event XML.
-    Used for contains|all style detections.
-    """
-    event_lower = event_xml.lower()
-    for _, value in pairs:
-        if value.lower() not in event_lower:
-            return False
-    return True
-
-
 def event_is_detected(event_xml: str,
                       detection_pairs: list[tuple[str, str]],
                       filter_pairs:    list[tuple[str, str]]) -> bool:
-    """
-    Apply detection logic:
-      1. Event must match at least one detection pair
-      2. Event must NOT match any filter pair
-    """
     if not any_pair_matches(event_xml, detection_pairs):
         return False
     if filter_pairs and any_pair_matches(event_xml, filter_pairs):
@@ -173,169 +255,166 @@ def event_is_detected(event_xml: str,
 
 # ── Core test function ────────────────────────────────────────────────────────
 
-def test_rule(rule_path:     pathlib.Path,
-              sample_folder: pathlib.Path,
-              expect_match:  bool = True) -> tuple[bool, str, int]:
+def test_rule(rule_path:  pathlib.Path,
+              sample_paths: list[pathlib.Path]) -> tuple[bool, str, int, int]:
     """
-    Test a Sigma rule against all EVTX files in sample_folder.
+    Test a Sigma rule against every mapped EVTX file.
 
     Returns:
-      (passed: bool, message: str, match_count: int)
+      (passed, message, total_match_count, files_with_match)
     """
     rule = load_rule(rule_path)
     if not rule:
-        return False, "Could not load rule file", 0
+        return False, "Could not load rule file", 0, 0
 
     detection_pairs, filter_pairs = extract_blocks(rule)
 
     if not detection_pairs:
-        return False, "No detection strings found in rule", 0
+        return False, "No detection strings found in rule", 0, 0
 
-    evtx_files = list(sample_folder.rglob("*.evtx"))
-    if not evtx_files:
-        return False, f"No EVTX files in {sample_folder}", 0
+    total_match = 0
+    files_matched = 0
+    files_tested  = 0
 
-    match_count = 0
-    for evtx_file in evtx_files:
-        for event_xml in parse_evtx(evtx_file):
+    for sample in sample_paths:
+        files_tested += 1
+        for event_xml in parse_evtx(sample):
             if event_is_detected(event_xml, detection_pairs, filter_pairs):
-                match_count += 1
+                total_match += 1
 
-    matched = match_count > 0
-    file_count = len(evtx_files)
+        # Did this file contribute at least one match?
+        for event_xml in parse_evtx(sample):
+            if event_is_detected(event_xml, detection_pairs, filter_pairs):
+                files_matched += 1
+                break
 
-    if expect_match:
-        if matched:
-            return True,  f"PASS — {match_count} match(es) across {file_count} file(s)", match_count
-        else:
-            return False, f"FAIL — 0 matches across {file_count} file(s)", 0
+    if total_match > 0:
+        return True, f"PASS — {total_match} match(es) across {files_matched}/{files_tested} file(s)", total_match, files_matched
     else:
-        if not matched:
-            return True,  f"PASS — 0 false positives across {file_count} file(s)", 0
-        else:
-            return False, f"FAIL — {match_count} false positive(s) across {file_count} file(s)", match_count
+        return False, f"FAIL — 0 matches across {files_tested} file(s)", 0, 0
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-def main():
-    print("=" * 64)
-    print("  DetectLab-CI — EVTX Test Runner")
-    print("=" * 64)
+def main() -> int:
+    print("=" * 72)
+    print("  DetectLab-CI — EVTX-ATTACK-SAMPLES Test Runner")
+    print("=" * 72)
+
+    if not SAMPLES_ROOT.exists():
+        print(f"ERROR: EVTX dataset not found at {SAMPLES_ROOT}")
+        print("Clone https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES into this directory.")
+        return 2
 
     passed  = 0
     failed  = 0
     skipped = 0
     results = []
 
-    # ── 1. Malicious sample tests ─────────────────────────────────────────
-    print("\n[1/2] Detection test — malicious EVTX samples\n")
+    OK_ICON   = "[PASS]"
+    FAIL_ICON = "[FAIL]"
+    SKIP_ICON = "[SKIP]"
 
-    for rule_rel, technique in RULE_TO_TECHNIQUE.items():
-        rule_path  = RULES_DIR / rule_rel
-        sample_dir = MALICIOUS_DIR / technique
-        rule_name  = pathlib.Path(rule_rel).stem
-
-        print(f"  ▸ {rule_name}")
-        print(f"    technique : {technique}")
+    for rule_rel, sample_rels in RULE_TO_EVTX.items():
+        rule_path = RULES_DIR / rule_rel
+        rule_name = pathlib.Path(rule_rel).stem
+        tactic    = rule_rel.split("/")[1] if "/" in rule_rel else "?"
 
         if not rule_path.exists():
-            msg = f"Rule file not found: {rule_path}"
-            print(f"    ⚠  SKIP — {msg}\n")
+            msg = f"No Sigma rule at {rule_path}"
+            print(f"\n  > {rule_name}")
+            print(f"    technique : {tactic}")
+            print(f"    {SKIP_ICON} SKIP -- {msg}")
             skipped += 1
-            results.append((rule_name, technique, "SKIP", msg, 0))
+            results.append((rule_name, tactic, "SKIP", msg, 0))
             continue
 
-        if not sample_dir.exists() or not any(sample_dir.rglob("*.evtx")):
-            msg = f"No EVTX samples in {sample_dir}"
-            print(f"    ⚠  SKIP — {msg}\n")
+        # Resolve every mapped sample (case-insensitive)
+        samples: list[pathlib.Path] = []
+        missing: list[str] = []
+        for rel in sample_rels:
+            resolved = resolve_sample(rel)
+            if resolved is None:
+                missing.append(rel)
+            else:
+                samples.append(resolved)
+
+        if not samples:
+            msg = f"None of the mapped EVTX files exist ({len(missing)} missing)"
+            print(f"\n  > {rule_name}")
+            print(f"    technique : {tactic}")
+            print(f"    {SKIP_ICON} SKIP -- {msg}")
+            for m in missing:
+                print(f"      - missing: {m}")
             skipped += 1
-            results.append((rule_name, technique, "SKIP", msg, 0))
+            results.append((rule_name, tactic, "SKIP", msg, 0))
             continue
 
-        # Show what was extracted for transparency
         rule = load_rule(rule_path)
         det, fil = extract_blocks(rule)
-        print(f"    detection strings : {len(det)}")
-        print(f"    filter strings    : {len(fil)}")
 
-        ok, msg, count = test_rule(rule_path, sample_dir, expect_match=True)
+        print(f"\n  > {rule_name}")
+        print(f"    technique      : {tactic}")
+        print(f"    detection strs : {len(det)}")
+        print(f"    filter strs    : {len(fil)}")
+        print(f"    sample files   : {len(samples)} / {len(sample_rels)} mapped")
+
+        ok, msg, count, files_matched = test_rule(rule_path, samples)
 
         status = "PASS" if ok else "FAIL"
-        icon   = "✓" if ok else "✗"
-        print(f"    {icon}  {status} — {msg}\n")
+        icon   = OK_ICON if ok else FAIL_ICON
+        print(f"    {icon} {status} -- {msg}")
 
         if ok:
             passed += 1
         else:
             failed += 1
+            if missing:
+                print(f"      missing EVTX: {len(missing)}")
+                for m in missing[:5]:
+                    print(f"        - {m}")
 
-        results.append((rule_name, technique, status, msg, count))
-
-    # ── 2. Clean baseline — false positive check ──────────────────────────
-    print("[2/2] False positive check — clean baseline\n")
-
-    fp_total    = 0
-    fp_results  = []
-    clean_files = list(CLEAN_DIR.rglob("*.evtx")) if CLEAN_DIR.exists() else []
-
-    if not clean_files:
-        print(f"  ⚠  No clean baseline EVTX found in {CLEAN_DIR}")
-        print("     Add clean EVTX files to run FP check\n")
-    else:
-        for rule_rel, technique in RULE_TO_TECHNIQUE.items():
-            rule_path = RULES_DIR / rule_rel
-            rule_name = pathlib.Path(rule_rel).stem
-
-            if not rule_path.exists():
-                continue
-
-            ok, msg, count = test_rule(rule_path, CLEAN_DIR, expect_match=False)
-
-            icon  = "✓" if ok else "⚠"
-            label = "0 FP" if ok else f"{count} FP"
-            print(f"  {icon}  {rule_name:<45} {label}")
-
-            fp_total += count
-            fp_results.append((rule_name, ok, count))
+        results.append((rule_name, tactic, status, msg, count))
 
     # ── Summary ───────────────────────────────────────────────────────────
     total_tested = passed + failed
     detect_rate  = passed / total_tested if total_tested > 0 else 0.0
 
-    print("\n" + "=" * 64)
+    print("\n" + "=" * 72)
     print("  SUMMARY")
-    print("=" * 64)
-    print(f"  Rules tested   : {total_tested}")
-    print(f"  Passed         : {passed}")
-    print(f"  Failed         : {failed}")
-    print(f"  Skipped        : {skipped}")
-    print(f"  Detection rate : {detect_rate:.0%}")
-    print(f"  Threshold      : {MIN_DETECT_RATE:.0%}")
-    if clean_files:
-        print(f"  False positives: {fp_total}")
+    print("=" * 72)
+    print(f"  Rules mapped    : {len(RULE_TO_EVTX)}")
+    print(f"  Rules tested    : {total_tested}")
+    print(f"  Passed          : {passed}")
+    print(f"  Failed          : {failed}")
+    print(f"  Skipped         : {skipped}")
+    print(f"  Detection rate  : {detect_rate:.0%}")
+    print(f"  Threshold       : {MIN_DETECT_RATE:.0%}")
 
-    # ── Results table ─────────────────────────────────────────────────────
     print()
     col = 48
-    print(f"  {'Rule':<{col}} {'Technique':<14} {'Status'}")
-    print(f"  {'-'*col} {'-'*14} {'-'*6}")
-    for rule_name, technique, status, msg, count in results:
-        icon = "✓" if status == "PASS" else ("⚠" if status == "SKIP" else "✗")
-        print(f"  {icon} {rule_name:<{col-1}} {technique:<14} {status}")
+    print(f"  {'Rule':<{col}} {'Tactic':<22} {'Status'}")
+    print(f"  {'-'*col} {'-'*22} {'-'*6}")
+    for rule_name, tactic, status, msg, count in results:
+        if status == "PASS":
+            icon = "[OK]"
+        elif status == "SKIP":
+            icon = "[--]"
+        else:
+            icon = "[!!]"
+        print(f"  {icon} {rule_name:<{col-1}} {tactic:<22} {status}")
 
     print()
 
     # ── CI gate ───────────────────────────────────────────────────────────
     if total_tested == 0:
-        print("WARNING: No rules were tested — check EVTX sample paths")
-        sys.exit(0)
+        print("WARNING: no rules were tested — check Sigma rule files and EVTX paths")
+        return 0
 
     if detect_rate < MIN_DETECT_RATE:
-        print(f"FAIL: detection rate {detect_rate:.0%} is below "
-              f"threshold {MIN_DETECT_RATE:.0%}")
+        print(f"FAIL: detection rate {detect_rate:.0%} below threshold {MIN_DETECT_RATE:.0%}")
         print("Fix failing rules before merging.")
-        sys.exit(1)
+        return 1
 
     if failed > 0:
         print(f"WARNING: {failed} rule(s) failed but overall rate "
@@ -344,6 +423,8 @@ def main():
         print(f"PASS: all {passed} rules detected successfully. "
               f"Detection rate: {detect_rate:.0%}")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

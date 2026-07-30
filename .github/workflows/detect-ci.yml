@@ -57,7 +57,7 @@ jobs:
           python scripts/test_runner.py
 
       - name: Run coverage_mapper unit tests
-        run: python3 tests/test_coverage_mapper.py
+        run: python scripts/coverage_mapper.py
 
       - name: Convert to KQL (Microsoft Sentinel)
         run: |

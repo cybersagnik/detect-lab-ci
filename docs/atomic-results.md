@@ -396,7 +396,7 @@ was confirmed enabled during this test.
 | 1 | T1059.001 | Encoded PowerShell | T1059.001-17 | ✅ | Sysmon 1 |
 | 2 | T1053.005 | Scheduled Task | T1053.005-1 | ✅ | Sysmon 1 |
 | 3 | T1003.001 | LSASS Access | T1003.001-1 | ✅ | Sysmon 10 |
-| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 1 |
+| 4 | T1547.001 | Registry Run Key | T1547.001-1 | ✅ | Sysmon 13 |
 | 5 | T1548.002 | UAC Bypass Fodhelper | T1548.002-3 | ✅ | Sysmon 1 |
 | 6 | T1016 | Network Config Discovery | T1016-1 | ✅ | Sysmon 1 |
 | 7 | T1047 | WMIC Process Creation | T1047-5 | ✅ | Sysmon 1 |

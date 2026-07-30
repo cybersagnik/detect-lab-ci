@@ -280,25 +280,11 @@ Same rule, two SIEMs, regenerated on every push.
 
 ![CI Pipeline Passing — Lint, EVTX Tests, Convert, Coverage, Gap Analysis](docs/images/ci-passing.png)
 
-> _Placeholder — replace with a screenshot of the green GitHub Actions
-> run on `master` showing all steps (checkout → lint → test runner →
+> checkout → lint → test runner →
 > unit tests → KQL convert → SPL convert → auto-commit → coverage →
 > gap analysis → upload artifacts) passing._
 
 Pipeline definition: [`.github/workflows/detect-ci.yml`](.github/workflows/detect-ci.yml).
-
----
-
-## Demo video
-
-Walkthrough of the full detection-engineering loop — author a Sigma
-rule, push, watch CI lint, EVTX-test, convert, regenerate the
-Navigator layer, and surface the gap report — in under 10 minutes.
-
-🎬 [Link to demo video — placeholder, replace when published](#)
-
-> _Placeholder URL — drop the public YouTube / Loom link here once the
-> screen recording is uploaded._
 
 ---
 
@@ -316,7 +302,6 @@ Navigator layer, and surface the gap report — in under 10 minutes.
 
 ## Credits
 
-- Sigma rules by **Sagnik Ray** (`author: Sagnik Ray`).
 - EVTX test dataset: [sbousseaden/EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES).
 - Adversary emulation: [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team).
 - Sigma tooling: [SigmaHQ/pySigma](https://github.com/SigmaHQ/pySigma).

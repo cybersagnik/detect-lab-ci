@@ -151,10 +151,7 @@ in the [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/
 `versions.navigator = 4.9`) — every covered sub-technique is coloured
 green (`#1d9e75`) and the parent rows expand to show each child.
 
-![ATT&CK Navigator Coverage Heatmap](docs/images/navigator-coverage.png)
-
-> _Placeholder — replace with a screenshot of the Navigator view after
-> opening `navigator/coverage_layer.json`._
+![ATT&CK Navigator Coverage Heatmap](docs/images/navigator-coverage.svg)
 
 Layer breakdown: **20** total entries — **7** parent scaffolds
 (`T1003`, `T1053`, `T1059`, `T1218`, `T1546`, `T1547`, `T1548`) and

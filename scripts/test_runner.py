@@ -408,8 +408,11 @@ def main() -> int:
 
     # ── CI gate ───────────────────────────────────────────────────────────
     if total_tested == 0:
-        print("WARNING: no rules were tested — check Sigma rule files and EVTX paths")
-        return 0
+        print(
+            "FAIL: no rules were tested — check that EVTX-ATTACK-SAMPLES submodule "
+            "is initialized and Sigma rule paths are correct."
+        )
+        return 1
 
     if detect_rate < MIN_DETECT_RATE:
         print(f"FAIL: detection rate {detect_rate:.0%} below threshold {MIN_DETECT_RATE:.0%}")

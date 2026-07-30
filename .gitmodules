@@ -1,0 +1,4 @@
+[submodule "EVTX-ATTACK-SAMPLES"]
+	path = EVTX-ATTACK-SAMPLES
+	url = https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES
+	branch = master

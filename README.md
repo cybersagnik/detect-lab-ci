@@ -282,7 +282,7 @@ Same rule, two SIEMs, regenerated on every push.
 
 > checkout → lint → test runner →
 > unit tests → KQL convert → SPL convert → auto-commit → coverage →
-> gap analysis → upload artifacts) passing._
+> gap analysis → upload artifacts -> passing_
 
 Pipeline definition: [`.github/workflows/detect-ci.yml`](.github/workflows/detect-ci.yml).
 
